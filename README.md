@@ -92,3 +92,13 @@ npm run dev
 
 4. Para probar los webhooks en local: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
 5. Tarjeta de prueba de Stripe: `4242 4242 4242 4242`.
+
+<!-- BEGIN cc:que-se-valora -->
+¡Hola! Aquí te explico qué miraremos con lupa cuando corrijamos tu proyecto de Ecommerce.
+
+## 📋 Qué se valora
+
+Lo que más pesa es que tu ecommerce funcione como se espera y que cumpla con todo lo que se pide en el enunciado, ¡eso es lo principal! También es muy importante que tu código esté bien organizado y sea fácil de entender, y que la arquitectura de tu proyecto tenga sentido. El vídeo demo es otra parte importante, ya que nos permite ver tu proyecto en acción y cómo lo presentas. Finalmente, aunque con un peso menor, valoraremos que expliques bien tus decisiones y que la documentación sea clara.
+
+Recuerda que el enunciado del proyecto es la guía principal y la evaluación no te penalizará por cosas que no se pidan explícitamente allí.
+<!-- END cc:que-se-valora -->
