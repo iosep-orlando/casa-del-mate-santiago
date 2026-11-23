@@ -13,7 +13,7 @@ El enunciado original está en [README-enunciado.md](README-enunciado.md).
 
 ## Demo
 
-**https://casa-del-mate-santiago.onrender.com** *(se completa al publicar; ver «Despliegue»)*
+**https://casa-del-mate-santiago.onrender.com**
 
 - Cliente: creá una cuenta en «Crear cuenta» y pagá con la tarjeta de prueba
   argentina `4000 0003 2000 0021`, cualquier fecha futura, cualquier código y
@@ -233,6 +233,9 @@ configuración del servicio está en [`render.yaml`](render.yaml).
 6. **Comprobar.** Hacé una compra en la URL pública. En Stripe, el evento
    tiene que aparecer en el webhook con respuesta **200**, y el pedido
    **Pagado** en el panel.
+
+Comprobado en la versión publicada: la primera compra llegó al webhook sin
+fallos (1 entrega, 0 fallidas, 854 ms con el servicio despierto).
 
 Las URL de vuelta de Stripe se arman con el dominio público, que Render
 expone solo en `RENDER_EXTERNAL_URL`. En otro servicio se fija con `APP_URL`.
