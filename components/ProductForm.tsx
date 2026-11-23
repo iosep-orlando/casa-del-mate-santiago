@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useLayoutEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
 import { centsToInput, formatPesos, parsePesos } from "@/lib/money";
 import type { ProductDTO } from "@/lib/types";
+import { uploadedImageId } from "@/lib/images";
+import { ImageProblem, shrinkImage } from "@/lib/shrink-image";
 import { normalizeImageUrl } from "@/lib/validation";
 import FormError from "./FormError";
 import ProductImage from "./ProductImage";
@@ -18,9 +20,64 @@ export default function ProductForm({ product, categories }: { product?: Product
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Con Cache Components, Next.js esconde esta página al salir (por ejemplo,
+  // al guardar y volver a la lista) en vez de desmontarla. Sin esto, al
+  // volver a editar el mismo producto aparecía todavía "Guardando…", o lo
+  // que se había escrito sin guardar. Al esconderse, vuelve a cero.
+  useLayoutEffect(() => {
+    const form = formRef.current;
+    const initialPrice = product ? centsToInput(product.price) : "";
+    const initialImage = product?.imageUrl ?? "";
+    return () => {
+      form?.reset();
+      setPrice(initialPrice);
+      setImageUrl(initialImage);
+      setPending(false);
+      setUploading(false);
+      setConfirmDelete(false);
+      setError(null);
+      setImageError(null);
+    };
+  }, [product]);
 
   const cents = price ? parsePesos(price) : null;
   const image = normalizeImageUrl(imageUrl);
+  const uploaded = uploadedImageId(imageUrl) !== null;
+
+  async function uploadFile(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    setImageError(null);
+    try {
+      const blob = await shrinkImage(file);
+      const res = await fetch("/api/admin/images", {
+        method: "POST",
+        headers: { "content-type": blob.type },
+        body: blob,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setImageError(data.error ?? "No se pudo subir la foto.");
+        return;
+      }
+      setImageUrl(data.url);
+    } catch (err) {
+      setImageError(err instanceof ImageProblem ? err.message : "No se pudo subir la foto.");
+    } finally {
+      setUploading(false);
+      if (fileInput.current) fileInput.current.value = ""; // para poder elegir la misma otra vez
+    }
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    void uploadFile(event.dataTransfer.files[0]);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,7 +125,7 @@ export default function ProductForm({ product, categories }: { product?: Product
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`${panel} mt-6 grid gap-6 p-5 lg:grid-cols-[1fr_14rem]`}>
+    <form ref={formRef} onSubmit={handleSubmit} className={`${panel} mt-6 grid gap-6 p-5 lg:grid-cols-[1fr_14rem]`}>
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className={label}>Nombre</label>
@@ -109,19 +166,58 @@ export default function ProductForm({ product, categories }: { product?: Product
           </div>
         </div>
         <div>
-          <label htmlFor="imageUrl" className={label}>Foto (URL)</label>
+          <p className={label}>Foto</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              disabled={uploading}
+              className={buttonSecondary}
+            >
+              {uploading ? "Subiendo la foto…" : imageUrl ? "Cambiar la foto" : "Subir una foto"}
+            </button>
+            {imageUrl && !uploading && (
+              <button type="button" onClick={() => setImageUrl("")} className="text-sm font-semibold text-muted hover:text-danger">
+                Quitar la foto
+              </button>
+            )}
+          </div>
           <input
-            id="imageUrl"
-            name="imageUrl"
-            value={imageUrl}
-            onChange={(event) => setImageUrl(event.target.value)}
-            placeholder="https://…/foto.jpg"
-            aria-describedby="image-help"
-            className={input}
+            ref={fileInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/*"
+            onChange={(event) => uploadFile(event.target.files?.[0])}
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
           />
-          <p id="image-help" className={`mt-1 text-xs ${image.ok ? "text-muted" : "text-danger"}`}>
-            {image.ok ? "Opcional. Una URL https de la foto, o una ruta de la tienda como /productos/mate.svg." : image.error}
+          <p className="mt-1 text-xs text-muted">
+            Desde tu computadora o celular (JPG, PNG o WebP). También podés arrastrarla sobre la vista previa. Se
+            achica sola antes de subir.
           </p>
+          <FormError message={imageError} />
+          {uploaded ? (
+            <input type="hidden" name="imageUrl" value={imageUrl} />
+          ) : (
+            <details className="mt-2" open={Boolean(imageUrl)}>
+              <summary className="cursor-pointer text-sm font-semibold text-muted hover:text-ink">
+                O pegá la URL de una foto de internet
+              </summary>
+              <input
+                id="imageUrl"
+                name="imageUrl"
+                value={imageUrl}
+                onChange={(event) => setImageUrl(event.target.value)}
+                placeholder="https://…/foto.jpg"
+                aria-label="URL de la foto"
+                aria-describedby="image-help"
+                className={`${input} mt-2`}
+              />
+              <p id="image-help" className={`mt-1 text-xs ${image.ok ? "text-muted" : "text-danger"}`}>
+                {image.ok ? "Tiene que empezar con https://." : image.error}
+              </p>
+            </details>
+          )}
         </div>
         <label className="flex items-center gap-2 font-semibold">
           <input type="checkbox" name="active" defaultChecked={product?.active ?? true} className="h-4 w-4 accent-yerba" />
@@ -129,7 +225,7 @@ export default function ProductForm({ product, categories }: { product?: Product
         </label>
         <FormError message={error} />
         <div className="flex flex-wrap gap-3">
-          <button type="submit" disabled={pending} className={button}>
+          <button type="submit" disabled={pending || uploading} className={button}>
             {pending ? "Guardando…" : editing ? "Guardar cambios" : "Crear producto"}
           </button>
           <Link href="/admin/productos" className={buttonSecondary}>Cancelar</Link>
@@ -156,9 +252,14 @@ export default function ProductForm({ product, categories }: { product?: Product
           </p>
         )}
       </div>
-      <div>
+      <div onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>
         <p className={label}>Vista previa</p>
-        <ProductImage src={image.ok ? image.value : null} name={product?.name ?? "?"} className="rounded-md border border-line" />
+        <ProductImage
+          src={image.ok ? image.value : null}
+          name={product?.name ?? "?"}
+          eager
+          className={`rounded-md border border-line ${uploading ? "opacity-50" : ""}`}
+        />
       </div>
     </form>
   );

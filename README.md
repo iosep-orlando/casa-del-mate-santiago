@@ -478,7 +478,12 @@ Lo que se revisó y cambió sobre lo generado:
   - un archivo de texto se rechaza;
   - al quitar la foto, la vieja se borra;
   - un cliente no puede subir fotos.
-- **El carrito se relee cada vez que se muestra.** Con Cache Components,
-  Next.js esconde las páginas en vez de desmontarlas, y al volver al carrito
-  se veía el de antes. Es lo mismo que pasó en VideoVault con el formulario de
-  subida.
+- **Páginas escondidas en vez de cerradas.** Con Cache Components,
+  Next.js esconde las páginas que dejás y, al volver, las muestra como
+  quedaron. Es lo mismo que pasó en VideoVault con el formulario de subida.
+  - El carrito se relee cada vez que se muestra.
+  - En la prueba encontré que, al guardar un producto y volver a editarlo, el
+    botón seguía en «Guardando…»; y al salir de la sesión y volver a
+    ingresar, en «Un momento…». Los dos formularios vuelven a cero al
+    esconderse, y se probó en el navegador guardando dos veces seguidas y
+    saliendo y entrando.

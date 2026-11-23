@@ -1,6 +1,8 @@
 import type { Filter } from "mongodb";
 import { collections, productToDTO, toObjectId, type ProductDoc } from "../db";
 import { searchPatterns } from "../search";
+import { uploadedImageId } from "../images";
+import { deleteImageIfUploaded } from "./images";
 import type { ProductDTO } from "../types";
 import type { ProductInput } from "../validation";
 
@@ -71,24 +73,35 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
   const _id = toObjectId(id);
   if (!_id) return null;
   const { products } = await collections();
-  const doc = await products.findOneAndUpdate(
+  const before = await products.findOneAndUpdate(
     { _id },
     { $set: { ...input, updatedAt: new Date() } },
-    { returnDocument: "after" },
+    { returnDocument: "before" },
   );
-  return doc ? productToDTO(doc) : null;
+  if (!before) return null;
+  if (before.imageUrl !== input.imageUrl) await forgetImage(before.imageUrl);
+  return productToDTO({ ...before, ...input });
+}
+
+/** Si la foto vieja era una subida y ningún producto la usa ya, se borra. */
+async function forgetImage(url: string | null): Promise<void> {
+  if (!uploadedImageId(url)) return;
+  const { products } = await collections();
+  if ((await products.countDocuments({ imageUrl: url })) === 0) await deleteImageIfUploaded(url);
 }
 
 /**
  * Borrar de verdad. Los pedidos no se rompen: guardan su propia copia del
- * nombre y el precio. Se saca también de los carritos donde estaba.
+ * nombre y el precio. Se saca también de los carritos donde estaba, y su
+ * foto subida, si nadie más la usa.
  */
 export async function deleteProduct(id: string): Promise<boolean> {
   const _id = toObjectId(id);
   if (!_id) return false;
   const { products, carts } = await collections();
-  const { deletedCount } = await products.deleteOne({ _id });
-  if (deletedCount === 0) return false;
+  const deleted = await products.findOneAndDelete({ _id });
+  if (!deleted) return false;
   await carts.updateMany({ "items.productId": _id }, { $pull: { items: { productId: _id } } });
+  await forgetImage(deleted.imageUrl);
   return true;
 }

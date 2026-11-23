@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { afterLogin } from "@/lib/navigation";
 import { MIN_PASSWORD } from "@/lib/validation";
 import FormError from "./FormError";
@@ -14,6 +14,19 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const isLogin = mode === "login";
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Next.js esconde esta página al entrar (en vez de desmontarla). Al salir
+  // de la sesión y volver a /login, el botón seguía en "Un momento…". Al
+  // esconderse, el formulario vuelve a cero (y se borra la contraseña).
+  useLayoutEffect(() => {
+    const form = formRef.current;
+    return () => {
+      form?.reset();
+      setPending(false);
+      setError(null);
+    };
+  }, []);
   const next = params.get("next");
   const otherHref = (path: string) => (next ? `${path}?next=${encodeURIComponent(next)}` : path);
 
@@ -43,7 +56,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`${panel} mx-auto mt-12 w-full max-w-md space-y-4 p-6`}>
+    <form ref={formRef} onSubmit={handleSubmit} className={`${panel} mx-auto mt-12 w-full max-w-md space-y-4 p-6`}>
       <h1 className="display text-2xl">{isLogin ? "Ingresar" : "Crear cuenta"}</h1>
       {!isLogin && (
         <div>

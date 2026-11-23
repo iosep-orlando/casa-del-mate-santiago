@@ -26,8 +26,9 @@ async function EditForm({ params }: Pick<PageProps<"/admin/productos/[id]">, "pa
   return (
     <>
       <h1 className={`${pageTitle} mt-2`}>{product.name}</h1>
-      {/* key: al pasar de un producto a otro, el formulario arranca de cero. */}
-      <ProductForm key={product.id} product={product} categories={categories} />
+      {/* key: con otro producto, o con este mismo ya guardado con otros datos,
+          el formulario arranca de cero con los valores actuales. */}
+      <ProductForm key={JSON.stringify(product)} product={product} categories={categories} />
     </>
   );
 }
