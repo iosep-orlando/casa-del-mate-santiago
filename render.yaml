@@ -1,0 +1,31 @@
+# Despliegue en Render como Blueprint: Render lee este fichero y crea el
+# servicio. Ver la sección "Despliegue" del README.
+services:
+  - type: web
+    name: casa-del-mate-santiago
+    runtime: node
+    plan: free
+    # Virginia, junto al clúster de MongoDB Atlas (AWS us-east-1).
+    region: virginia
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: MONGODB_DB
+        value: ecommerce
+      # Render inventa un valor al azar al crear el servicio: nadie lo ve
+      # ni hace falta copiarlo.
+      - key: AUTH_SECRET
+        generateValue: true
+      # Secretos: no van en el repositorio. Render los pide al crear el servicio.
+      - key: MONGODB_URI
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false

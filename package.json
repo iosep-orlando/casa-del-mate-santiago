@@ -1,0 +1,41 @@
+{
+  "name": "1.3.110-ecommerce",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "seed": "tsx --env-file=.env.local scripts/seed.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.18",
+    "mongodb": "^7.9.1",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "stripe": "^23.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.1.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.1.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

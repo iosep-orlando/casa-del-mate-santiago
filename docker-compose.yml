@@ -1,0 +1,17 @@
+# MongoDB local para desarrollo:
+#
+#   docker compose up -d
+#
+# Si ya tenés otro MongoDB en el 27017 (de otro proyecto), no hace falta
+# este: poné su cadena en MONGODB_URI y otra base en MONGODB_DB.
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

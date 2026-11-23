@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* La Matera: los colores de la yerba y del mate. Un verde yerba profundo
+   para las acciones, un verde hoja para los acentos, el tostado de la
+   calabaza para los fondos de los productos, sobre un papel apenas verdoso. */
+@theme inline {
+  --font-sans: var(--font-archivo);
+  --color-paper: #f6f7f1; /* fondo */
+  --color-ink: #1d231b; /* texto */
+  --color-muted: #5d6657;
+  --color-line: #dfe3d4; /* bordes */
+  --color-yerba: #33502a; /* acciones */
+  --color-yerba-dark: #243a1d;
+  --color-hoja: #7c9235; /* acentos */
+  --color-calabaza: #ece3cf; /* fondo de las fotos */
+  --color-danger: #b42318;
+}
+
+/* Los títulos en Archivo ancho (eje wdth): la misma familia que el texto,
+   estirada, para que tengan peso sin cambiar de letra. */
+.display {
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  :where(a, button, input, textarea, select, summary):focus-visible {
+    outline: 2px solid var(--color-hoja);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
